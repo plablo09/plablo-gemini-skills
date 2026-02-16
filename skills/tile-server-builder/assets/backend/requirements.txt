@@ -1,0 +1,15 @@
+fastapi>=0.100,<1.0
+uvicorn>=0.20
+starlette>=0.27
+httpx>=0.24
+pytest>=7.0
+
+# Data + spatial stack
+duckdb>=1.0
+geopandas>=0.14
+pandas>=2.0
+numpy>=1.26,<2.1
+pyarrow>=10.0
+shapely>=2.0
+pyproj>=3.5
+pyogrio>=0.7

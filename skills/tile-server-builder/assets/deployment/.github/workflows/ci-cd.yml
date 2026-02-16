@@ -1,0 +1,97 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+  pull_request:
+    branches:
+      - '**'
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+
+env:
+  PROJECT_ID: {{GCP_PROJECT_ID}}
+  REGION: {{GCP_REGION}}
+  REPO_NAME: {{GCP_ARTIFACT_REPO}}
+  IMAGE_NAME: {{IMAGE_NAME}}
+  SERVICE_NAME: {{SERVICE_NAME}}
+  GCS_BUCKET: {{GCS_BUCKET}}
+
+jobs:
+  test-and-build-verification:
+    name: Test & Build Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate Synthetic Test Data
+        run: python create_test_data.py
+
+      - name: Run Tests
+        run: pytest
+
+      - name: Initialize Dummy Database for Docker Build
+        run: python init_ci_db.py
+
+      - name: Verify Docker Build
+        run: docker build . -t test-image
+
+  deploy:
+    name: Deploy to Cloud Run
+    needs: test-and-build-verification
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Google Cloud Auth
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Download Production Database
+        run: |
+          gcloud storage cp gs://${{ env.GCS_BUCKET }}/mexico_city.duckdb data/mexico_city.duckdb
+
+      - name: Configure Docker Auth
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build and Push Container
+        run: |
+          IMAGE_URI=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker build . -t $IMAGE_URI
+          docker push $IMAGE_URI
+
+      - name: Deploy to Cloud Run
+        run: |
+          IMAGE_URI=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          gcloud run deploy ${{ env.SERVICE_NAME }} 
+            --image $IMAGE_URI 
+            --region ${{ env.REGION }} 
+            --platform managed 
+            --allow-unauthenticated 
+            --memory 4Gi 
+            --cpu 2
