@@ -7,6 +7,10 @@ description: Scaffolds a new project for serving vector tiles from geospatial da
 
 This skill scaffolds a new project for serving vector tiles from geospatial data using FastAPI, DuckDB, and MapLibre GL JS.
 
+## Requirements
+
+*   **Virtual Environment:** The generated project MUST be developed and run within a Python virtual environment (`.venv`). This ensures dependency isolation and consistent behavior across environments.
+
 ## Workflow
 
 1.  **Invocation:** Invoke the `tile-server-builder` skill with a project name.
@@ -23,14 +27,19 @@ This skill scaffolds a new project for serving vector tiles from geospatial data
     *   **Backend:** `backend/main.py`, `backend/db.py`, `requirements.txt`
     *   **Frontend:** `frontend/index.html`, `frontend/map.js`, `frontend/style.css`
     *   **Data Preparation:** `prepare_data.py`
-    *   **Other:** `.gitignore`, `Dockerfile`
+    *   **Other:** `README.md`, `.gitignore`, `Dockerfile`
     *   **Deployment (Only if requested):** `.github/workflows/ci-cd.yml`, `scripts/deploy_data.sh`
 5.  **Customization and Development:** Customize the generated files to your specific needs.
     *   Update `prepare_data.py` to use your own data source.
     *   Modify the SQL query in `backend/main.py` to customize the tile generation.
     *   Adjust the map style in `frontend/map.js`.
 5.  **Data Preparation:** Run `prepare_data.py` to create the initial DuckDB database.
-6.  **Local Development:** Run the FastAPI backend and view the map locally.
+6.  **Local Development:**
+    *   Create a Python virtual environment: `python3 -m venv .venv`
+    *   Activate the virtual environment: `source .venv/bin/activate` (or `.venv\Scripts\activate` on Windows).
+    *   Install dependencies: `pip install -r requirements.txt`
+    *   Run the FastAPI backend: `fastapi dev backend/main.py`
+    *   View the map locally.
 7.  **Deployment:** Use `scripts/deploy_data.sh` and push to `main` to trigger the CI/CD pipeline.
 
 ## Placeholder Reference
@@ -71,7 +80,7 @@ This skill includes the following assets and scripts:
 *   `assets/frontend/`: MapLibre GL JS frontend templates.
 *   `assets/data/`: An empty directory for your data.
 *   `assets/deployment/`: Dockerfile, CI/CD workflow, and deployment script templates.
-*   `assets/project/`: `.gitignore` template.
+*   `assets/project/`: `.gitignore` and `README.md` templates.
 
 ### Scripts
 
