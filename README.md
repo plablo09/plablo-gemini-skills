@@ -6,41 +6,39 @@ This repository contains a collection of custom skills for the [Gemini CLI](http
 
 ### [Tile Server Builder](./skills/tile-server-builder)
 Scaffolds a high-performance vector tile server project using **FastAPI**, **DuckDB**, and **MapLibre GL JS**. It automates data preparation (GeoParquet/RTREE), dynamic MVT serving, and provides optional CI/CD templates for Google Cloud Run.
+*(Gemini CLI format)*
+
+### [Deploy to p3](./skills/deploy-to-p3)
+Scaffolds GitHub Actions CI/CD deployment for any app to the `*.p3.geoint.mx` experimental server. Generates `docker-compose.prod.yml`, a deploy workflow, and Caddyfile instructions.
+*(Claude Code format)*
 
 ## Installation
 
-To install a skill from this repository, follow these steps:
+### Claude Code skills
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd plablo-gemini-skills
-    ```
+Clone the repo and symlink or copy the skill directory to your personal skills folder:
 
-2.  **Install the desired skill:**
-    You can install a skill either at the user level (available for all projects) or the workspace level (available only for the current project).
+```bash
+git clone <repository-url>
 
-    *   **User Level (Recommended):**
-        ```bash
-        gemini skills install tile-server-builder.skill --scope user
-        ```
-    *   **Workspace Level:**
-        ```bash
-        gemini skills install tile-server-builder.skill --scope workspace
-        ```
+# Personal install (available in all projects)
+cp -r plablo-gemini-skills/skills/deploy-to-p3 ~/.claude/skills/
 
-3.  **Reload Skills:**
-    After installation, you **must** reload the skills in your active Gemini CLI session to enable them:
-    ```bash
-    /skills reload
-    ```
+# Or project-level install
+cp -r plablo-gemini-skills/skills/deploy-to-p3 .claude/skills/
+```
 
-## Development & Contribution
+Then invoke with `/deploy-to-p3` in any Claude Code session.
 
-Each skill is organized within the `skills/` directory following the standard Gemini CLI skill anatomy.
+### Gemini CLI skills
 
-### Packaging Skills
-If you modify a skill's source code, you must repackage it before reinstalling:
+```bash
+gemini skills install tile-server-builder.skill --scope user
+/skills reload
+```
+
+### Packaging Gemini CLI skills
+If you modify a Gemini skill's source code, repackage before reinstalling:
 ```bash
 node <path-to-skill-creator>/scripts/package_skill.cjs skills/<skill-name>
 ```

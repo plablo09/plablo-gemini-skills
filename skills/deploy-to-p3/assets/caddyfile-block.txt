@@ -1,0 +1,3 @@
+http://{{APP_NAME}}.p3.geoint.mx {
+    reverse_proxy {{APP_NAME}}-app:{{PORT}}
+}

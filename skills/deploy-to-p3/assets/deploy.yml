@@ -1,0 +1,65 @@
+name: Deploy
+
+# OPTION A — trigger after CI passes (replace {{CI_WORKFLOW_NAME}} with the CI workflow file name):
+# on:
+#   workflow_run:
+#     workflows: ["{{CI_WORKFLOW_NAME}}"]
+#     types: [completed]
+#     branches: [main]
+#
+# OPTION B — trigger directly on push to main (use when there is no separate CI workflow):
+# on:
+#   push:
+#     branches: [main]
+#
+# {{DEPLOY_TRIGGER}}
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: {{GITHUB_OWNER_REPO}}
+
+jobs:
+  build:
+    name: Build & push image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  deploy:
+    name: Deploy to p3
+    needs: build
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull and restart container
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        run: |
+          APP_DIR=~/apps/{{APP_NAME}}
+          mkdir -p "$APP_DIR"
+          cp docker-compose.prod.yml "$APP_DIR/docker-compose.prod.yml"
+          echo "IMAGE=$IMAGE" > "$APP_DIR/.env"
+          cd "$APP_DIR"
+          docker compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml up -d
+          docker image prune -f
